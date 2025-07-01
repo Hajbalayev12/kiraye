@@ -1,0 +1,22 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+.WebsiteLayout {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #f9f9f9;
+  overflow: hidden;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.MainContent {
+  flex: 1;
+}
