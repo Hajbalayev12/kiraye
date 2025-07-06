@@ -1,248 +1,264 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./AddPost.module.scss";
+
+interface City {
+  id: number;
+  name: string;
+}
+
+interface Region {
+  id: number;
+  name: string;
+  cityId: number;
+  cityName?: string;
+}
 
 const AddPost = () => {
   const [formData, setFormData] = useState({
     title: "",
     address: "",
-    price: "",
+    cityId: "",
+    regionId: "",
+    rooms: "",
     description: "",
-    meta: "",
-    labels: "", // comma separated string
-    images: "", // comma separated URLs for simplicity
-    details: {
-      roomCount: "",
-      area: "",
-      floor: "",
-      repair: "",
-      furniture: "",
-      gas: "",
-      heating: "",
-    },
-    realtorName: "",
-    realtorPhone: "",
+    price: "",
   });
 
+  const [cities, setCities] = useState<City[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+
+  const token = localStorage.getItem("token") || "";
+
+  // Fetch cities on mount
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const res = await fetch(
+          "https://rashad2002-001-site1.ltempurl.com/api/City/GetAll"
+        );
+        if (!res.ok) throw new Error("Failed to fetch cities");
+        const data: City[] = await res.json();
+        setCities(data);
+      } catch (error) {
+        console.error("Error loading cities:", error);
+      }
+    };
+    fetchCities();
+  }, []);
+
+  // Fetch regions when cityId changes
+  useEffect(() => {
+    if (!formData.cityId) {
+      setRegions([]);
+      return;
+    }
+    const fetchRegions = async () => {
+      try {
+        const cityIdNumber = Number(formData.cityId);
+        const res = await fetch(
+          `https://rashad2002-001-site1.ltempurl.com/api/Region/GetRegionsByCityId/${cityIdNumber}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch regions");
+        const data: Region[] = await res.json();
+        setRegions(data);
+      } catch (error) {
+        console.error("Error loading regions:", error);
+        setRegions([]);
+      }
+    };
+    fetchRegions();
+  }, [formData.cityId]);
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
-    if (
-      [
-        "roomCount",
-        "area",
-        "floor",
-        "repair",
-        "furniture",
-        "gas",
-        "heating",
-      ].includes(name)
-    ) {
-      setFormData((prev) => ({
-        ...prev,
-        details: { ...prev.details, [name]: value },
-      }));
+    if (name === "cityId") {
+      setFormData((prev) => ({ ...prev, cityId: value, regionId: "" }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle file input changes
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setImages(Array.from(e.target.files));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Prepare the post object
-    const post = {
-      title: formData.title,
-      address: formData.address,
-      price: formData.price,
-      description: formData.description,
-      meta: formData.meta,
-      labels: formData.labels
-        .split(",")
-        .map((label) => label.trim())
-        .filter(Boolean),
-      images: formData.images
-        .split(",")
-        .map((url) => url.trim())
-        .filter(Boolean),
-      details: [
-        { label: "Otaq sayı", value: formData.details.roomCount },
-        { label: "Sahə", value: formData.details.area },
-        { label: "Mərtəbə", value: formData.details.floor },
-        { label: "Təmir", value: formData.details.repair },
-        { label: "Əşyalar", value: formData.details.furniture },
-        { label: "Qaz", value: formData.details.gas },
-        { label: "İstilik", value: formData.details.heating },
-      ],
-      realtor: {
-        name: formData.realtorName,
-        phone: formData.realtorPhone,
-      },
-    };
+    if (!token) {
+      alert("You must be logged in to add a post.");
+      return;
+    }
 
-    console.log("Submitted post:", post);
+    // Build FormData instead of JSON
+    const formPayload = new FormData();
+    formPayload.append("Title", formData.title.trim());
+    formPayload.append("Address", formData.address.trim());
+    formPayload.append("CityId", formData.cityId);
+    formPayload.append("RegionId", formData.regionId);
+    formPayload.append("Rooms", formData.rooms);
+    formPayload.append("Description", formData.description.trim());
+    formPayload.append("Price", formData.price);
 
-    // TODO: send 'post' to backend or context
+    images.forEach((imageFile, index) => {
+      formPayload.append("Images", imageFile);
+      // If API expects images as array with index, you might use:
+      // formPayload.append(`Images[${index}]`, imageFile);
+    });
+
+    try {
+      const response = await fetch(
+        "https://rashad2002-001-site1.ltempurl.com/api/House/Create",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // DO NOT set Content-Type header! Let browser set multipart boundary
+          },
+          body: formPayload,
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = errorText;
+        }
+        console.error("Failed to create post:", errorData);
+        alert("Failed to create post: " + JSON.stringify(errorData, null, 2));
+        return;
+      }
+
+      const result = await response.json();
+      console.log("Post created successfully:", result);
+      alert("Post created!");
+
+      // Reset form
+      setFormData({
+        title: "",
+        address: "",
+        cityId: "",
+        regionId: "",
+        rooms: "",
+        description: "",
+        price: "",
+      });
+      setRegions([]);
+      setImages([]);
+    } catch (error) {
+      console.error("Network error:", error);
+      alert("Something went wrong. Check console.");
+    }
   };
 
   return (
     <div className={styles.addPostContainer}>
-      <h2>Yeni elan əlavə et</h2>
-      <form className={styles.addPostForm} onSubmit={handleSubmit}>
-        <label>Başlıq</label>
+      <h2>Add New Post</h2>
+      <form
+        className={styles.addPostForm}
+        onSubmit={handleSubmit}
+        encType="multipart/form-data"
+      >
+        <label>Title</label>
         <input
-          type="text"
           name="title"
           value={formData.title}
           onChange={handleChange}
           required
-          placeholder="3 otaqlı, 104 m², Baku, Nəsimi"
+          placeholder="Title..."
         />
 
-        <label>Ünvan</label>
+        <label>Address</label>
         <input
-          type="text"
           name="address"
           value={formData.address}
           onChange={handleChange}
           required
-          placeholder="Bakı şəhəri, Nəsimi rayonu, nəfəslər pr."
+          placeholder="Address..."
         />
 
-        <label>Qiymət (AZN / ay)</label>
-        <input
-          type="text"
-          name="price"
-          value={formData.price}
+        <label>City</label>
+        <select
+          name="cityId"
+          value={formData.cityId}
           onChange={handleChange}
           required
-          placeholder="2 500 AZN / ay"
+        >
+          <option value="">Select a city</option>
+          {cities.map((city) => (
+            <option key={city.id} value={city.id}>
+              {city.name}
+            </option>
+          ))}
+        </select>
+
+        <label>Region</label>
+        <select
+          name="regionId"
+          value={formData.regionId}
+          onChange={handleChange}
+          required
+          disabled={!formData.cityId || regions.length === 0}
+        >
+          <option value="">
+            {formData.cityId ? "Select a region" : "Select a city first"}
+          </option>
+          {regions.map((region) => (
+            <option key={region.id} value={region.id}>
+              {region.name}
+            </option>
+          ))}
+        </select>
+
+        <label>Rooms</label>
+        <input
+          name="rooms"
+          type="number"
+          value={formData.rooms}
+          onChange={handleChange}
+          required
+          placeholder="Number of rooms..."
         />
 
-        <label>Təsvir</label>
+        <label>Description</label>
         <textarea
           name="description"
           value={formData.description}
           onChange={handleChange}
-          placeholder="Mənzilin əlavə təsviri..."
-          rows={4}
+          rows={3}
+          placeholder="Description..."
         />
 
-        <label>Meta (məsələn, 'Yeniləndi: 25.11.2024 · Baxış: 779')</label>
+        <label>Price (AZN)</label>
         <input
-          type="text"
-          name="meta"
-          value={formData.meta}
+          name="price"
+          type="number"
+          value={formData.price}
           onChange={handleChange}
-          placeholder="Yeniləndi: 25.11.2024 · Baxış: 779"
+          required
+          placeholder="Price..."
         />
 
-        <label>
-          Etiketlər (vergüllə ayrılmış, məsələn: Aylıq, Yeni Tikili)
-        </label>
+        <label>Images</label>
         <input
-          type="text"
-          name="labels"
-          value={formData.labels}
-          onChange={handleChange}
-          placeholder="Aylıq, Yeni Tikili"
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleImageChange}
         />
 
-        <label>Şəkil URL-ləri (vergüllə ayrılmış)</label>
-        <input
-          type="text"
-          name="images"
-          value={formData.images}
-          onChange={handleChange}
-          placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"
-        />
-
-        <h3>Ətraflı məlumat</h3>
-
-        <label>Otaq sayı</label>
-        <input
-          type="text"
-          name="roomCount"
-          value={formData.details.roomCount}
-          onChange={handleChange}
-          placeholder="3"
-        />
-
-        <label>Sahə</label>
-        <input
-          type="text"
-          name="area"
-          value={formData.details.area}
-          onChange={handleChange}
-          placeholder="104 m²"
-        />
-
-        <label>Mərtəbə</label>
-        <input
-          type="text"
-          name="floor"
-          value={formData.details.floor}
-          onChange={handleChange}
-          placeholder="23/10"
-        />
-
-        <label>Təmir</label>
-        <input
-          type="text"
-          name="repair"
-          value={formData.details.repair}
-          onChange={handleChange}
-          placeholder="Əla"
-        />
-
-        <label>Əşyalar</label>
-        <input
-          type="text"
-          name="furniture"
-          value={formData.details.furniture}
-          onChange={handleChange}
-          placeholder="Var"
-        />
-
-        <label>Qaz</label>
-        <input
-          type="text"
-          name="gas"
-          value={formData.details.gas}
-          onChange={handleChange}
-          placeholder="Var"
-        />
-
-        <label>İstilik</label>
-        <input
-          type="text"
-          name="heating"
-          value={formData.details.heating}
-          onChange={handleChange}
-          placeholder="Kombi"
-        />
-
-        <h3>Əmlakçı məlumatı</h3>
-
-        <label>Ad Soyad</label>
-        <input
-          type="text"
-          name="realtorName"
-          value={formData.realtorName}
-          onChange={handleChange}
-          placeholder="SHRIYAR BEY"
-        />
-
-        <label>Telefon nömrəsi</label>
-        <input
-          type="text"
-          name="realtorPhone"
-          value={formData.realtorPhone}
-          onChange={handleChange}
-          placeholder="050-228-36-**"
-        />
-
-        <button type="submit">Elanı əlavə et</button>
+        <button type="submit">Add Post</button>
       </form>
     </div>
   );

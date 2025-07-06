@@ -1,55 +1,132 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import styles from "./SignUp.module.scss";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const SignUp = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
+    surname: "",
+    userName: "",
     email: "",
     password: "",
     confirmPassword: "",
+    phonePrefix: "50",
+    phoneNumber: "",
+    role: "0",
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    if (name === "phoneNumber" && !/^\d{0,7}$/.test(value)) return;
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
+    setSuccessMsg("");
 
     if (formData.password !== formData.confirmPassword) {
       setErrorMsg("Passwords do not match");
       return;
     }
 
+    if (formData.phoneNumber.length !== 7) {
+      setErrorMsg("Phone number must be exactly 7 digits.");
+      return;
+    }
+
+    const fullPhone = `+994${formData.phonePrefix}${formData.phoneNumber}`;
+
     setLoading(true);
 
     try {
-      const response = await fetch("https://your-backend.com/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      const response = await fetch(
+        "https://rashad2002-001-site1.ltempurl.com/api/Auth/Register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name.trim(),
+            surname: formData.surname.trim(),
+            email: formData.email.trim(),
+            phoneNumber: fullPhone,
+            userName: formData.userName.trim(),
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+            role: Number(formData.role),
+          }),
+        }
+      );
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type");
 
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
+      let data: any;
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        // If response is plain text (not JSON), read as text
+        const text = await response.text();
+        if (!response.ok) {
+          throw new Error(text || "Registration failed with unknown error");
+        } else {
+          // Success with text response
+          setSuccessMsg(text);
+          // Redirect to signin page after 1.5s delay
+          setTimeout(() => {
+            navigate("/signin");
+          }, 1500);
+          // Clear form
+          setFormData({
+            name: "",
+            surname: "",
+            userName: "",
+            email: "",
+            password: "",
+            confirmPassword: "",
+            phonePrefix: "50",
+            phoneNumber: "",
+            role: "0",
+          });
+          setLoading(false);
+          return;
+        }
       }
 
-      console.log("Registration successful:", data);
-      // Redirect or show success message
+      if (!response.ok) {
+        throw new Error(
+          data?.message || JSON.stringify(data?.errors) || "Registration failed"
+        );
+      }
+
+      // JSON success response
+      setSuccessMsg("Registration successful! Redirecting to Sign In...");
+      setTimeout(() => {
+        navigate("/signin");
+      }, 500);
+
+      setFormData({
+        name: "",
+        surname: "",
+        userName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        phonePrefix: "50",
+        phoneNumber: "",
+        role: "0",
+      });
     } catch (err: any) {
       setErrorMsg(err.message);
     } finally {
@@ -59,18 +136,17 @@ const SignUp = () => {
 
   return (
     <div className={styles.signUpContainer}>
-      <form className={styles.signUpForm} onSubmit={handleSubmit}>
+      <form className={styles.signUpForm} onSubmit={handleSubmit} noValidate>
         <h2 className={styles.title}>Create an Account</h2>
 
         {errorMsg && <p className={styles.error}>{errorMsg}</p>}
+        {successMsg && <p className={styles.success}>{successMsg}</p>}
 
         <div className={styles.inputGroup}>
-          <label htmlFor="name">Full Name</label>
+          <label>Full Name</label>
           <input
-            type="text"
-            id="name"
             name="name"
-            placeholder="John Doe"
+            placeholder="John"
             value={formData.name}
             onChange={handleChange}
             required
@@ -79,10 +155,33 @@ const SignUp = () => {
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="email">Email</label>
+          <label>Surname</label>
+          <input
+            name="surname"
+            placeholder="Doe"
+            value={formData.surname}
+            onChange={handleChange}
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label>Username</label>
+          <input
+            name="userName"
+            placeholder="johndoe123"
+            value={formData.userName}
+            onChange={handleChange}
+            required
+            disabled={loading}
+          />
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label>Email</label>
           <input
             type="email"
-            id="email"
             name="email"
             placeholder="example@email.com"
             value={formData.email}
@@ -93,11 +192,54 @@ const SignUp = () => {
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="password">Password</label>
+          <label>Phone Number</label>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span>+994</span>
+            <select
+              name="phonePrefix"
+              value={formData.phonePrefix}
+              onChange={handleChange}
+              required
+              disabled={loading}
+            >
+              <option value="50">50</option>
+              <option value="51">51</option>
+              <option value="55">55</option>
+              <option value="70">70</option>
+              <option value="77">77</option>
+            </select>
+            <input
+              type="text"
+              name="phoneNumber"
+              placeholder="1234567"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              required
+              disabled={loading}
+              maxLength={7}
+            />
+          </div>
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label>Role</label>
+          <select
+            name="role"
+            value={formData.role}
+            onChange={handleChange}
+            required
+            disabled={loading}
+          >
+            <option value="0">User</option>
+            <option value="1">Makler</option>
+          </select>
+        </div>
+
+        <div className={styles.inputGroup}>
+          <label>Password</label>
           <div className={styles.passwordWrapper}>
             <input
               type={showPassword ? "text" : "password"}
-              id="password"
               name="password"
               placeholder="••••••••"
               value={formData.password}
@@ -108,6 +250,7 @@ const SignUp = () => {
             <span
               className={styles.eyeIcon}
               onClick={() => setShowPassword(!showPassword)}
+              style={{ cursor: "pointer" }}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
@@ -115,11 +258,10 @@ const SignUp = () => {
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="confirmPassword">Confirm Password</label>
+          <label>Confirm Password</label>
           <div className={styles.passwordWrapper}>
             <input
               type={showConfirm ? "text" : "password"}
-              id="confirmPassword"
               name="confirmPassword"
               placeholder="••••••••"
               value={formData.confirmPassword}
@@ -130,6 +272,7 @@ const SignUp = () => {
             <span
               className={styles.eyeIcon}
               onClick={() => setShowConfirm(!showConfirm)}
+              style={{ cursor: "pointer" }}
             >
               {showConfirm ? <FaEyeSlash /> : <FaEye />}
             </span>
@@ -141,7 +284,7 @@ const SignUp = () => {
         </button>
 
         <p className={styles.bottomText}>
-          Already have an account? <a href="/signin">Sign In</a>
+          Already have an account? <Link to="/signin">Sign In</Link>
         </p>
       </form>
     </div>

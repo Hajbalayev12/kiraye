@@ -1,36 +1,63 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ import for redirect
 import styles from "./SignIn.module.scss";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const SignIn = () => {
-  const [email, setEmail] = useState("");
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const navigate = useNavigate(); // ✅ initialize
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg("");
 
+    // ✅ Debug: Log input values
+    console.log("Logging in with:");
+    console.log("UsernameOrEmail:", usernameOrEmail);
+    console.log("Password:", password);
+
     try {
-      const response = await fetch("https://your-backend.com/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        "https://rashad2002-001-site1.ltempurl.com/api/Auth/Login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            UsernameOrEmail: usernameOrEmail,
+            Password: password,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+        const message =
+          data.message ||
+          (data.errors
+            ? Object.values(data.errors).flat().join(" ")
+            : "Login failed");
+        throw new Error(message);
       }
 
       console.log("Login successful:", data);
-      // TODO: Save token, redirect user
+
+      const token = data.token || data.accessToken || data.access_token;
+      if (!token) throw new Error("No token received from server");
+
+      localStorage.setItem("token", token);
+
+      // alert("Login successful!");
+
+      navigate("/"); // ✅ redirect to homepage
     } catch (err: any) {
       setErrorMsg(err.message);
     } finally {
@@ -46,13 +73,13 @@ const SignIn = () => {
         {errorMsg && <p className={styles.error}>{errorMsg}</p>}
 
         <div className={styles.inputGroup}>
-          <label htmlFor="email">Email</label>
+          <label htmlFor="usernameOrEmail">Username or Email</label>
           <input
-            type="email"
-            id="email"
-            placeholder="example@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            id="usernameOrEmail"
+            placeholder="Enter username or email"
+            value={usernameOrEmail}
+            onChange={(e) => setUsernameOrEmail(e.target.value)}
             required
             disabled={loading}
           />
@@ -73,6 +100,7 @@ const SignIn = () => {
             <span
               className={styles.eyeIcon}
               onClick={() => setShowPassword(!showPassword)}
+              style={{ cursor: "pointer" }}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>

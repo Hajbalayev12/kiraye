@@ -1,165 +1,71 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./Home.module.scss";
 import { FaMapMarkerAlt, FaSlidersH } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { AiOutlineHeart } from "react-icons/ai"; // For heart icon
+import { AiOutlineHeart } from "react-icons/ai";
 
-const Posts = [
-  {
-    id: 1,
-    price: "529 USD",
-    location: "Kubinka",
-    floor: "8/9",
-    rooms: "3 rooms",
-    area: "80m²",
-    images: ["src/assets/image1.png", "src/assets/image2.png"],
-    sponsor: true,
-    time: null,
-  },
-  {
-    id: 2,
-    price: "2,059 USD",
-    location: "Xetai",
-    floor: "17/20",
-    rooms: "3 rooms",
-    area: "160m²",
-    images: ["src/assets/image3.png", "src/assets/image4.png"],
-    sponsor: true,
-    time: "11 min",
-  },
-  {
-    id: 3,
-    price: "176 USD",
-    location: "Masazır",
-    floor: "1",
-    rooms: "2 rooms",
-    area: "60m²",
-    images: ["src/assets/image2.png", "src/assets/image4.png"],
-    sponsor: false,
-    time: "1 hour ago",
-  },
-  {
-    id: 4,
-    price: "235 USD",
-    location: "Xırdalan",
-    floor: "4/4",
-    rooms: "2 rooms",
-    area: "55m²",
-    images: ["src/assets/image1.png", "src/assets/image3.png"],
-    sponsor: false,
-    time: "1 hour ago",
-  },
-  {
-    id: 4,
-    price: "235 USD",
-    location: "Xırdalan",
-    floor: "4/4",
-    rooms: "2 rooms",
-    area: "55m²",
-    images: ["src/assets/image1.png", "src/assets/image3.png"],
-    sponsor: false,
-    time: "1 hour ago",
-  },
-  {
-    id: 4,
-    price: "235 USD",
-    location: "Xırdalan",
-    floor: "4/4",
-    rooms: "2 rooms",
-    area: "55m²",
-    images: ["src/assets/image1.png", "src/assets/image3.png"],
-    sponsor: false,
-    time: "1 hour ago",
-  },
-  {
-    id: 4,
-    price: "235 USD",
-    location: "Xırdalan",
-    floor: "4/4",
-    rooms: "2 rooms",
-    area: "55m²",
-    images: ["src/assets/image2.png", "src/assets/image3.png"],
-    sponsor: false,
-    time: "1 hour ago",
-  },
-  {
-    id: 4,
-    price: "235 USD",
-    location: "Xırdalan",
-    floor: "4/4",
-    rooms: "2 rooms",
-    area: "55m²",
-    images: ["src/assets/image4.png", "src/assets/image3.png"],
-    sponsor: false,
-    time: "1 hour ago",
-  },
-  {
-    id: 4,
-    price: "235 USD",
-    location: "Xırdalan",
-    floor: "4/4",
-    rooms: "2 rooms",
-    area: "55m²",
-    images: ["src/assets/image3.png", "src/assets/image3.png"],
-    sponsor: false,
-    time: "1 hour ago",
-  },
-  {
-    id: 4,
-    price: "235 USD",
-    location: "Xırdalan",
-    floor: "4/4",
-    rooms: "2 rooms",
-    area: "55m²",
-    images: ["src/assets/image1.png", "src/assets/image3.png"],
-    sponsor: false,
-    time: "1 hour ago",
-  },
-];
+interface Post {
+  id: number;
+  price: number;
+  address: string;
+  regionId: number;
+  rooms: number;
+  description: string;
+  images: string[];
+  // Add other fields if needed
+}
 
 const Home: React.FC = () => {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await fetch(
+          "https://rashad2002-001-site1.ltempurl.com/api/House/GetAll"
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch posts");
+        }
+        const data = await response.json();
+        // Your API returns an object like { items: [...], totalCount, ... }
+        setPosts(data.items || []);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+
+  if (loading) return <div>Loading posts...</div>;
+  if (error) return <div>Error: {error}</div>;
+
   return (
     <div className={styles.Home}>
-      <div className={styles.searchBar}>
-        <select className={styles.select}>
-          <option>Al</option>
-          <option>Aylıq Kirayə</option>
-          <option>Günlük Kirayə</option>
-        </select>
-
-        <div className={styles.locationInput}>
-          <input type="text" placeholder="Enter location" />
-          <FaMapMarkerAlt className={styles.icon} />
-        </div>
-
-        <select className={styles.select}>
-          <option>Apartment</option>
-          <option>House</option>
-          <option>Villa</option>
-        </select>
-
-        <input className={styles.input} type="text" placeholder="Area, m²" />
-        <input className={styles.input} type="text" placeholder="Price, AZN" />
-
-        <select className={styles.select}>
-          <option>Any room</option>
-          <option>1 room</option>
-          <option>2 rooms</option>
-          <option>3 rooms</option>
-        </select>
-
-        <button className={styles.filterBtn}>
-          <FaSlidersH />
-        </button>
-
-        <button className={styles.searchBtn}>Search</button>
-      </div>
+      {/* Your existing search bar here */}
 
       <div className={styles.container}>
-        {Posts.map((post) => (
+        {posts.length === 0 && <p>No posts found.</p>}
+
+        {posts.map((post) => (
           <Link to="/post" key={post.id} className={styles.card}>
             <div className={styles.imageWrapper}>
-              <img src={post.images[0]} alt={post.location} />
+              <img
+                src={
+                  post.images && post.images.length > 0
+                    ? post.images[0]
+                    : "/placeholder.jpg"
+                }
+                alt={post.address}
+              />
               <div className={styles.heart}>
                 <AiOutlineHeart />
               </div>
@@ -167,23 +73,18 @@ const Home: React.FC = () => {
 
             <div className={styles.info}>
               <div className={styles.priceRow}>
-                <span>{post.price}</span>
-                {post.sponsor ? (
-                  <span className={styles.sponsor}>Sponsorlu</span>
-                ) : (
-                  <span className={styles.time}>{post.time}</span>
-                )}
+                <span>{post.price} AZN</span>
+                {/* You can adjust sponsor/time logic here if API provides */}
               </div>
 
               <div className={styles.location}>
                 <FaMapMarkerAlt />
-                <span>{post.location}</span>
+                <span>{post.address}</span>
               </div>
 
               <div className={styles.details}>
-                <span>{post.rooms}</span>
-                <span>{post.area}</span>
-                <span>{post.floor}</span>
+                <span>{post.rooms} rooms</span>
+                {/* Add area and floor if you get them from API */}
               </div>
             </div>
           </Link>
