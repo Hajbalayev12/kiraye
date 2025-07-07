@@ -20,8 +20,11 @@ const Navbar = () => {
       </div>
 
       <div className={styles.right}>
-        <FaHeart className={styles.icon} />
-        <FaCommentDots className={styles.icon} />
+        {/* <FaHeart className={styles.icon} />
+        <FaCommentDots className={styles.icon} /> */}
+        <Link to="/profile">
+          <button className={styles.addBtn}>Profile</button>
+        </Link>
         <Link to="/addpost">
           <button className={styles.addBtn}>+ Yeni elan</button>
         </Link>

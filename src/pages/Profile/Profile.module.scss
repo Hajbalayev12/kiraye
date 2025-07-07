@@ -1,0 +1,70 @@
+.profileContainer {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.userInfo {
+  margin-bottom: 30px;
+
+  h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  p {
+    font-size: 16px;
+    color: #555;
+  }
+}
+
+.error {
+  color: red;
+}
+
+.postGrid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+}
+
+.postCard {
+  background-color: #f5f8fc;
+  border-radius: 8px;
+  overflow: hidden;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+
+  img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 6px;
+  }
+
+  h4 {
+    font-size: 18px;
+    margin-top: 10px;
+  }
+
+  p {
+    font-size: 14px;
+    margin: 5px 0;
+  }
+
+  .updateBtn {
+    display: inline-block;
+    margin-top: 10px;
+    background-color: #005eff;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+
+    &:hover {
+      background-color: #0040c1;
+    }
+  }
+}
