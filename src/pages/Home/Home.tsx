@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styles from "./Home.module.scss";
-import { FaMapMarkerAlt, FaSlidersH } from "react-icons/fa";
+import { FaMapMarkerAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { AiOutlineHeart } from "react-icons/ai";
 
@@ -8,11 +8,12 @@ interface Post {
   id: number;
   price: number;
   address: string;
-  regionId: number;
+  regionName: string;
+  cityName: string;
   rooms: number;
   description: string;
-  images: string[];
-  // Add other fields if needed
+  imgUrls: string[]; // Correct key for images from your API
+  amenityNames: string[]; // If you want to use amenities later
 }
 
 const Home: React.FC = () => {
@@ -33,7 +34,6 @@ const Home: React.FC = () => {
           throw new Error("Failed to fetch posts");
         }
         const data = await response.json();
-        // Your API returns an object like { items: [...], totalCount, ... }
         setPosts(data.items || []);
       } catch (err: any) {
         setError(err.message);
@@ -50,18 +50,18 @@ const Home: React.FC = () => {
 
   return (
     <div className={styles.Home}>
-      {/* Your existing search bar here */}
+      {/* You can add your search bar or filters here */}
 
       <div className={styles.container}>
         {posts.length === 0 && <p>No posts found.</p>}
 
         {posts.map((post) => (
-          <Link to="/post" key={post.id} className={styles.card}>
+          <Link to={`/post/${post.id}`} key={post.id} className={styles.card}>
             <div className={styles.imageWrapper}>
               <img
                 src={
-                  post.images && post.images.length > 0
-                    ? post.images[0]
+                  post.imgUrls && post.imgUrls.length > 0
+                    ? post.imgUrls[0]
                     : "/placeholder.jpg"
                 }
                 alt={post.address}
@@ -74,17 +74,19 @@ const Home: React.FC = () => {
             <div className={styles.info}>
               <div className={styles.priceRow}>
                 <span>{post.price} AZN</span>
-                {/* You can adjust sponsor/time logic here if API provides */}
+                {/* You can add sponsor/time info here */}
               </div>
 
               <div className={styles.location}>
                 <FaMapMarkerAlt />
-                <span>{post.address}</span>
+                <span>
+                  {post.address}, {post.regionName}, {post.cityName}
+                </span>
               </div>
 
               <div className={styles.details}>
                 <span>{post.rooms} rooms</span>
-                {/* Add area and floor if you get them from API */}
+                {/* Add more details if available */}
               </div>
             </div>
           </Link>

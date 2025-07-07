@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ import for redirect
 import styles from "./SignIn.module.scss";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import * as jwt_decode from "jwt-decode";
 
 const SignIn = () => {
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
@@ -39,6 +40,8 @@ const SignIn = () => {
 
       const data = await response.json();
 
+      console.log("Login response data:", data);
+
       if (!response.ok) {
         const message =
           data.message ||
@@ -48,14 +51,27 @@ const SignIn = () => {
         throw new Error(message);
       }
 
-      console.log("Login successful:", data);
-
       const token = data.token || data.accessToken || data.access_token;
       if (!token) throw new Error("No token received from server");
 
       localStorage.setItem("token", token);
 
-      // alert("Login successful!");
+      // Decode token to get user info:
+      const decoded = (jwt_decode as any)(token);
+      console.log("Decoded token:", decoded);
+
+      // Save user info (adjust keys based on your token's payload)
+      localStorage.setItem(
+        "userEmail",
+        decoded[
+          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+        ] || ""
+      );
+      localStorage.setItem(
+        "userName",
+        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+          ""
+      );
 
       navigate("/"); // ✅ redirect to homepage
     } catch (err: any) {

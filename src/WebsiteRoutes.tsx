@@ -12,7 +12,7 @@ const WebsiteRoutes = () => {
     <Routes>
       <Route path="/" element={<WebsiteLayout />}>
         <Route index element={<Home />} />
-        <Route path="post" element={<Post />} />
+        <Route path="post/:id" element={<Post />} />
         <Route path="addpost" element={<AddPost />} />
       </Route>
 
