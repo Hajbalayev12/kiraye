@@ -14,12 +14,9 @@ const WebsiteRoutes = () => {
     <Routes>
       <Route path="/" element={<WebsiteLayout />}>
         <Route index element={<Home />} />
-<<<<<<< HEAD
         <Route path="post/:id" element={<Post />} />
-=======
         <Route path="post" element={<Post />} />
         <Route path="profile" element={<Profile />} />
->>>>>>> a02c623 (profile)
         <Route path="addpost" element={<AddPost />} />
         <Route path="updatepost/:id" element={<UpdatePost />} />
       </Route>
