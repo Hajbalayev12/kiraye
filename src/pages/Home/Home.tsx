@@ -2,7 +2,12 @@ import React, { useEffect, useState } from "react";
 import styles from "./Home.module.scss";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { AiOutlineHeart } from "react-icons/ai";
+// import { AiOutlineHeart } from "react-icons/ai";
+
+interface Image {
+  id: number;
+  url: string;
+}
 
 interface Post {
   id: number;
@@ -12,7 +17,7 @@ interface Post {
   cityName: string;
   rooms: number;
   description: string;
-  imgUrls: string[];
+  images: Image[]; // ✅ updated from imgUrls
   amenityNames: string[];
 }
 
@@ -23,7 +28,7 @@ const Home: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  const pageSize = 4; // Show 3 posts per page
+  const pageSize = 4; // Show 4 posts per page
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -73,15 +78,15 @@ const Home: React.FC = () => {
             <div className={styles.imageWrapper}>
               <img
                 src={
-                  post.imgUrls && post.imgUrls.length > 0
-                    ? post.imgUrls[0]
+                  post.images && post.images.length > 0
+                    ? post.images[0].url
                     : "/placeholder.jpg"
                 }
                 alt={post.address}
               />
-              <div className={styles.heart}>
+              {/* <div className={styles.heart}>
                 <AiOutlineHeart />
-              </div>
+              </div> */}
             </div>
 
             <div className={styles.info}>

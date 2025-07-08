@@ -140,8 +140,7 @@ export default function UpdatePost() {
 
       // Append removed image IDs
       removedImageIds.forEach((id) => {
-        console.log("RemovedImageIds:", id);
-        fd.append("RemovedImageIds", String(id));
+        fd.append("DeletedImageIds", String(id));
       });
 
       // Append amenity IDs

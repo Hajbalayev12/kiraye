@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import styles from "./Profile.module.scss";
 import { Link } from "react-router-dom";
 
+interface Image {
+  id: number;
+  url: string;
+}
+
 interface Post {
   id: number;
   title: string;
   price: number;
   cityName: string;
   regionName: string;
-  imgUrls: string[];
+  images: Image[];
 }
 
 const Profile = () => {
@@ -96,7 +101,7 @@ const Profile = () => {
           {posts.map((post) => (
             <div key={post.id} className={styles.postCard}>
               <img
-                src={post.imgUrls?.[0] || "/placeholder.jpg"}
+                src={post.images?.[0]?.url || "/placeholder.jpg"}
                 alt={post.title}
                 className={styles.postImage}
               />
