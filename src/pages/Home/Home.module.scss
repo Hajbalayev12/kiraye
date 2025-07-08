@@ -1,5 +1,5 @@
-.Home{
-    color: none;
+.Home {
+  color: none;
 }
 
 .searchBar {
@@ -53,7 +53,7 @@
 }
 
 .searchBtn {
-  background-color: #2B82EF;
+  background-color: #2b82ef;
   color: white;
   border: none;
   padding: 15px 20px;
@@ -148,4 +148,42 @@
   justify-content: space-between;
   font-size: 14px;
   color: #333;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 30px 0;
+  gap: 10px;
+
+  button {
+    padding: 10px 16px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #f0f0f0;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+  }
+
+  .activePage {
+    background-color: #2b82ef;
+    color: #fff;
+    border-color: #2b82ef;
+
+    &:hover {
+      background-color: #2371ce;
+    }
+  }
 }

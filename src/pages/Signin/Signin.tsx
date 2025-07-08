@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ import for redirect
 import styles from "./SignIn.module.scss";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import * as jwt_decode from "jwt-decode";
+// import * as jwt_decode from "jwt-decode";
 
 const SignIn = () => {
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
@@ -57,21 +57,21 @@ const SignIn = () => {
       localStorage.setItem("token", token);
 
       // Decode token to get user info:
-      const decoded = (jwt_decode as any)(token);
-      console.log("Decoded token:", decoded);
+      // const decoded = (jwt_decode as any)(token);
+      // console.log("Decoded token:", decoded);
 
       // Save user info (adjust keys based on your token's payload)
-      localStorage.setItem(
-        "userEmail",
-        decoded[
-          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
-        ] || ""
-      );
-      localStorage.setItem(
-        "userName",
-        decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
-          ""
-      );
+      // localStorage.setItem(
+      //   "userEmail",
+      //   decoded[
+      //     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+      //   ] || ""
+      // );
+      // localStorage.setItem(
+      //   "userName",
+      //   decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] ||
+      //     ""
+      // );
 
       navigate("/"); // ✅ redirect to homepage
     } catch (err: any) {

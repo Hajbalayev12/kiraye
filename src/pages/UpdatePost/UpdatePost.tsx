@@ -2,191 +2,272 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./UpdatePost.module.scss";
 
-interface Post {
+interface Image {
   id: number;
-  title: string;
-  price: number;
-  cityName: string;
-  regionName: string;
-  description: string;
-  imgUrls: string[];
+  url: string;
 }
 
-const UpdatePost = () => {
+interface PostData {
+  id: number;
+  title: string;
+  address: string;
+  regionName: string;
+  cityName: string;
+  rooms: number;
+  ownerName: string;
+  ownerSurname: string;
+  contactPhone: string;
+  email: string;
+  description: string;
+  images: Image[]; // ✅ CHANGED
+  price: number;
+  amenityNames: string[];
+}
+
+interface Amenity {
+  id: number;
+  name: string;
+}
+
+export default function UpdatePost() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [post, setPost] = useState<Post | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [post, setPost] = useState<PostData | null>(null);
+  const [formData, setFormData] = useState<Partial<PostData>>({});
+  const [selectedAmenityIds, setSelectedAmenityIds] = useState<number[]>([]);
+  const [amenities, setAmenities] = useState<Amenity[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    title: "",
-    price: "",
-    cityName: "",
-    regionName: "",
-    description: "",
-  });
-
-  const token = localStorage.getItem("token");
+  const [success, setSuccess] = useState("");
+  const [newImages, setNewImages] = useState<File[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<number[]>([]); // ✅ CHANGED
 
   useEffect(() => {
-    if (!token || !id) {
-      setError("Missing token or post ID.");
-      return;
-    }
-
     const fetchPost = async () => {
-      setLoading(true);
-      setError("");
       try {
         const res = await fetch(
-          `https://rashad2002-001-site1.ltempurl.com/api/House/GetById?id=${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          `https://rashad2002-001-site1.ltempurl.com/api/House/Get/${id}`
         );
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch post");
-        }
-
+        if (!res.ok) throw new Error("Failed to fetch post");
         const data = await res.json();
         setPost(data);
-        setForm({
-          title: data.title || "",
-          price: data.price?.toString() || "",
-          cityName: data.cityName || "",
-          regionName: data.regionName || "",
-          description: data.description || "",
-        });
+        setFormData(data);
       } catch (err: any) {
-        setError(err.message || "Something went wrong");
+        setError(err.message || "Error fetching post");
       } finally {
         setLoading(false);
       }
     };
 
+    const fetchAmenities = async () => {
+      try {
+        const res = await fetch(
+          "https://rashad2002-001-site1.ltempurl.com/api/Amenity/GetAll"
+        );
+        const data = await res.json();
+        setAmenities(data);
+      } catch (err) {
+        console.error("Failed to load amenities.");
+      }
+    };
+
     fetchPost();
-  }, [id, token]);
+    fetchAmenities();
+  }, [id]);
+
+  useEffect(() => {
+    if (post && amenities.length && selectedAmenityIds.length === 0) {
+      const matched = amenities
+        .filter((a) => post.amenityNames.includes(a.name))
+        .map((a) => a.id);
+      setSelectedAmenityIds(matched);
+    }
+  }, [post, amenities]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setForm((prev) => ({
+    const { name, value, type } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: type === "number" ? Number(value) : value,
     }));
+  };
+
+  const handleAmenityChange = (id: number, checked: boolean) => {
+    setSelectedAmenityIds((prev) =>
+      checked ? [...prev, id] : prev.filter((a) => a !== id)
+    );
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setNewImages((prev) => [...prev, ...Array.from(e.target.files)]);
+    }
+  };
+
+  const handleDeleteImage = (index: number) => {
+    const updated = [...(formData.images || [])];
+    const removed = updated.splice(index, 1)[0]; // ⬅️ get removed image
+    if (removed?.id) {
+      setRemovedImageIds((prev) => [...prev, removed.id]);
+    }
+    setFormData((prev) => ({ ...prev, images: updated }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token || !id) {
-      setError("Missing token or post ID.");
-      return;
-    }
-
-    setLoading(true);
     setError("");
+    setSuccess("");
 
     try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Unauthorized");
+
+      const fd = new FormData();
+      fd.append("Id", String(formData.id));
+      fd.append("Title", formData.title || "");
+      fd.append("Description", formData.description || "");
+      fd.append("Rooms", String(formData.rooms));
+      fd.append("Price", String(formData.price));
+
+      // Append existing image URLs
+      (formData.images || []).forEach((img) => {
+        console.log("ImageUrls:", img.url);
+        fd.append("ImageUrls", img.url);
+      });
+
+      // Append removed image IDs
+      removedImageIds.forEach((id) => {
+        console.log("RemovedImageIds:", id);
+        fd.append("RemovedImageIds", String(id));
+      });
+
+      // Append amenity IDs
+      selectedAmenityIds.forEach((id) => {
+        console.log("AmenityIds:", id);
+        fd.append("AmenityIds", String(id));
+      });
+
+      // Append new images
+      newImages.forEach((file) => {
+        console.log("NewImages:", file.name);
+        fd.append("NewImages", file);
+      });
+
+      // Final log before sending
+      console.log("Final FormData to send:");
+      for (const [key, value] of fd.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+
       const res = await fetch(
-        `https://rashad2002-001-site1.ltempurl.com/api/House/Update?id=${id}`,
+        "https://rashad2002-001-site1.ltempurl.com/api/House/Update",
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            title: form.title,
-            price: Number(form.price),
-            cityName: form.cityName,
-            regionName: form.regionName,
-            description: form.description,
-          }),
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
         }
       );
 
       if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.message || "Failed to update post");
+        const errData = await res.json().catch(() => null);
+        console.log("🛑 Error response from server:", errData);
+        if (errData?.errors) {
+          const messages = Object.entries(errData.errors)
+            .map(([key, val]) => `${key}: ${(val as string[]).join(", ")}`)
+            .join("\n");
+          throw new Error(messages);
+        }
+        throw new Error(errData?.message || "Update failed");
       }
 
-      alert("Post updated successfully!");
-      navigate("/profile");
+      setSuccess("Post updated successfully");
+      setTimeout(() => navigate("/profile"), 1500);
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
+      console.error("❌ Submission error:", err.message);
+      setError(err.message);
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p className={styles.error}>{error}</p>;
-  if (!post) return <p>No post data</p>;
+  if (loading) return <div>Loading...</div>;
 
   return (
-    <div className={styles.updatePostCard}>
-      <img
-        src={post.imgUrls?.[0] || "/placeholder.jpg"}
-        alt={post.title}
-        className={styles.postImage}
+    <form className={styles.mainContent} onSubmit={handleSubmit}>
+      <div className={styles.imageGrid}>
+        {(formData.images || []).map((img, index) => (
+          <div key={img.id} className={styles.thumbnailWrapper}>
+            <img
+              src={img.url}
+              alt={`img-${index}`}
+              className={styles.thumbnail}
+            />
+            <button
+              type="button"
+              onClick={() => handleDeleteImage(index)}
+              className={styles.deleteBtn}
+            >
+              ✖
+            </button>
+          </div>
+        ))}
+
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleImageUpload}
+          className={styles.fileInput}
+        />
+      </div>
+
+      <input
+        name="title"
+        value={formData.title || ""}
+        onChange={handleChange}
+        required
       />
-      <form onSubmit={handleSubmit} className={styles.updateForm}>
-        <input
-          type="text"
-          name="title"
-          value={form.title}
-          onChange={handleChange}
-          placeholder="Title"
-          required
-          className={styles.input}
-        />
-        <input
-          type="number"
-          name="price"
-          value={form.price}
-          onChange={handleChange}
-          placeholder="Price (AZN)"
-          required
-          className={styles.input}
-          min={0}
-        />
-        <input
-          type="text"
-          name="cityName"
-          value={form.cityName}
-          onChange={handleChange}
-          placeholder="City"
-          required
-          className={styles.input}
-        />
-        <input
-          type="text"
-          name="regionName"
-          value={form.regionName}
-          onChange={handleChange}
-          placeholder="Region"
-          required
-          className={styles.input}
-        />
-        <textarea
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          placeholder="Description"
-          className={styles.textarea}
-          rows={4}
-        />
+      <textarea
+        name="description"
+        value={formData.description || ""}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="rooms"
+        type="number"
+        value={formData.rooms ?? ""}
+        onChange={handleChange}
+        required
+      />
+      <input
+        name="price"
+        type="number"
+        value={formData.price ?? ""}
+        onChange={handleChange}
+        required
+      />
 
-        <button type="submit" disabled={loading} className={styles.updateBtn}>
-          {loading ? "Updating..." : "Update Post"}
-        </button>
-      </form>
-    </div>
+      <div className={styles.amenities}>
+        {amenities.map((a) => (
+          <label key={a.id}>
+            <input
+              type="checkbox"
+              checked={selectedAmenityIds.includes(a.id)}
+              onChange={(e) => handleAmenityChange(a.id, e.target.checked)}
+            />
+            {a.name}
+          </label>
+        ))}
+      </div>
+
+      {error && <div className={styles.error}>{error}</div>}
+      {success && <div className={styles.success}>{success}</div>}
+
+      <button type="submit" className={styles.updateBtn}>
+        Save Changes
+      </button>
+    </form>
   );
-};
-
-export default UpdatePost;
+}

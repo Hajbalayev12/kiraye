@@ -12,14 +12,18 @@ interface Post {
   cityName: string;
   rooms: number;
   description: string;
-  imgUrls: string[]; // Correct key for images from your API
-  amenityNames: string[]; // If you want to use amenities later
+  imgUrls: string[];
+  amenityNames: string[];
 }
 
 const Home: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const pageSize = 4; // Show 3 posts per page
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -28,13 +32,16 @@ const Home: React.FC = () => {
 
       try {
         const response = await fetch(
-          "https://rashad2002-001-site1.ltempurl.com/api/House/GetAll"
+          `https://rashad2002-001-site1.ltempurl.com/api/House/Filter?PageNumber=${currentPage}&PageSize=${pageSize}`
         );
+
         if (!response.ok) {
           throw new Error("Failed to fetch posts");
         }
+
         const data = await response.json();
         setPosts(data.items || []);
+        setTotalCount(data.totalCount || 0);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -43,15 +50,21 @@ const Home: React.FC = () => {
     };
 
     fetchPosts();
-  }, []);
+  }, [currentPage]);
+
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   if (loading) return <div>Loading posts...</div>;
   if (error) return <div>Error: {error}</div>;
 
   return (
     <div className={styles.Home}>
-      {/* You can add your search bar or filters here */}
-
       <div className={styles.container}>
         {posts.length === 0 && <p>No posts found.</p>}
 
@@ -74,7 +87,6 @@ const Home: React.FC = () => {
             <div className={styles.info}>
               <div className={styles.priceRow}>
                 <span>{post.price} AZN</span>
-                {/* You can add sponsor/time info here */}
               </div>
 
               <div className={styles.location}>
@@ -86,12 +98,40 @@ const Home: React.FC = () => {
 
               <div className={styles.details}>
                 <span>{post.rooms} rooms</span>
-                {/* Add more details if available */}
               </div>
             </div>
           </Link>
         ))}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Prev
+          </button>
+
+          {[...Array(totalPages)].map((_, index) => (
+            <button
+              key={index}
+              className={currentPage === index + 1 ? styles.activePage : ""}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </button>
+          ))}
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 };
