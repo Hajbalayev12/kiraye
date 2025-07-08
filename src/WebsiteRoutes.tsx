@@ -8,6 +8,7 @@ import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import AddPost from "./pages/Addpost/Addpost";
 import Profile from "./pages/Profile/Profile";
 import UpdatePost from "./pages/UpdatePost/UpdatePost";
+import ResetPassword from "./pages/ResetPassword/ResetPassword";
 
 const WebsiteRoutes = () => {
   return (
@@ -23,6 +24,7 @@ const WebsiteRoutes = () => {
       <Route path="signin" element={<Signin />} />
       <Route path="signup" element={<Signup />} />
       <Route path="forgotpassword" element={<ForgotPassword />} />
+      <Route path="resetpassword" element={<ResetPassword />} />
     </Routes>
   );
 };

@@ -20,6 +20,7 @@ const Profile = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const userName = localStorage.getItem("userName");
   const userEmail = localStorage.getItem("userEmail");
@@ -27,49 +28,74 @@ const Profile = () => {
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    const fetchUserPosts = async () => {
-      if (!token) {
-        setError("You must be logged in.");
-        setPosts([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError("");
-
-        const res = await fetch(
-          "https://rashad2002-001-site1.ltempurl.com/api/House/GetAllByOwnerId",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => null);
-          const message = errorData?.message || "Failed to fetch user posts";
-          throw new Error(message);
-        }
-
-        const data = await res.json();
-        if (!Array.isArray(data.items)) {
-          throw new Error("Unexpected response data");
-        }
-
-        setPosts(data.items);
-      } catch (err: any) {
-        setError(err.message || "Something went wrong");
-        setPosts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserPosts();
-  }, [token]);
+  }, []);
+
+  const fetchUserPosts = async () => {
+    if (!token) {
+      setError("You must be logged in.");
+      setPosts([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError("");
+
+      const res = await fetch(
+        "https://rashad2002-001-site1.ltempurl.com/api/House/GetAllByOwnerId",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        const message = errorData?.message || "Failed to fetch user posts";
+        throw new Error(message);
+      }
+
+      const data = await res.json();
+      setPosts(Array.isArray(data.items) ? data.items : []);
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+      setPosts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (postId: number) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this post?"
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(
+        `https://rashad2002-001-site1.ltempurl.com/api/House/SoftDelete/${postId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to delete post.");
+      }
+
+      // Remove deleted post from local state
+      setPosts((prev) => prev.filter((post) => post.id !== postId));
+      setSuccess("Post deleted successfully.");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err: any) {
+      alert(err.message || "Delete failed");
+    }
+  };
 
   return (
     <div className={styles.profileContainer}>
@@ -93,6 +119,7 @@ const Profile = () => {
 
         {loading && <p>Loading posts...</p>}
         {error && <p className={styles.error}>{error}</p>}
+        {success && <p className={styles.success}>{success}</p>}
         {!loading && !error && posts.length === 0 && (
           <p>No posts shared yet.</p>
         )}
@@ -110,9 +137,21 @@ const Profile = () => {
                 {post.cityName}, {post.regionName}
               </p>
               <p>{post.price} AZN</p>
-              <Link to={`/updatepost/${post.id}`} className={styles.updateBtn}>
-                Update Post
-              </Link>
+
+              <div className={styles.actions}>
+                <Link
+                  to={`/updatepost/${post.id}`}
+                  className={styles.updateBtn}
+                >
+                  Update
+                </Link>
+                <button
+                  onClick={() => handleDelete(post.id)}
+                  className={styles.deleteBtn}
+                >
+                  ✖
+                </button>
+              </div>
             </div>
           ))}
         </div>
