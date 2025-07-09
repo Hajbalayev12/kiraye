@@ -19,7 +19,7 @@ interface PostData {
   contactPhone: string;
   email: string;
   description: string;
-  images: Image[]; // ✅ CHANGED
+  images: Image[];
   price: number;
   amenityNames: string[];
 }
@@ -41,16 +41,16 @@ export default function UpdatePost() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [newImages, setNewImages] = useState<File[]>([]);
-  const [removedImageIds, setRemovedImageIds] = useState<number[]>([]); // ✅ CHANGED
+  const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
 
   useEffect(() => {
-    const fetchPost = async () => {
+    async function fetchPost() {
       try {
         const res = await fetch(
           `https://rashad2002-001-site1.ltempurl.com/api/House/Get/${id}`
         );
         if (!res.ok) throw new Error("Failed to fetch post");
-        const data = await res.json();
+        const data: PostData = await res.json();
         setPost(data);
         setFormData(data);
       } catch (err: any) {
@@ -58,24 +58,26 @@ export default function UpdatePost() {
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    const fetchAmenities = async () => {
+    async function fetchAmenities() {
       try {
         const res = await fetch(
           "https://rashad2002-001-site1.ltempurl.com/api/Amenity/GetAll"
         );
-        const data = await res.json();
+        if (!res.ok) throw new Error("Failed to fetch amenities");
+        const data: Amenity[] = await res.json();
         setAmenities(data);
       } catch (err) {
         console.error("Failed to load amenities.");
       }
-    };
+    }
 
     fetchPost();
     fetchAmenities();
   }, [id]);
 
+  // Set initial selected amenities from post data
   useEffect(() => {
     if (post && amenities.length && selectedAmenityIds.length === 0) {
       const matched = amenities
@@ -83,8 +85,9 @@ export default function UpdatePost() {
         .map((a) => a.id);
       setSelectedAmenityIds(matched);
     }
-  }, [post, amenities]);
+  }, [post, amenities, selectedAmenityIds.length]);
 
+  // Handle input and textarea changes
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -95,25 +98,28 @@ export default function UpdatePost() {
     }));
   };
 
+  // Handle amenity checkbox toggle
   const handleAmenityChange = (id: number, checked: boolean) => {
     setSelectedAmenityIds((prev) =>
       checked ? [...prev, id] : prev.filter((a) => a !== id)
     );
   };
 
+  // Handle new image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setNewImages((prev) => [...prev, ...Array.from(e.target.files)]);
     }
   };
 
+  // Handle removing existing image (mark for deletion)
   const handleDeleteImage = (index: number) => {
-    const updated = [...(formData.images || [])];
-    const removed = updated.splice(index, 1)[0]; // ⬅️ get removed image
+    const updatedImages = [...(formData.images || [])];
+    const [removed] = updatedImages.splice(index, 1);
     if (removed?.id) {
       setRemovedImageIds((prev) => [...prev, removed.id]);
     }
-    setFormData((prev) => ({ ...prev, images: updated }));
+    setFormData((prev) => ({ ...prev, images: updatedImages }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -134,32 +140,27 @@ export default function UpdatePost() {
 
       // Append existing image URLs
       (formData.images || []).forEach((img) => {
-        console.log("ImageUrls:", img.url);
         fd.append("ImageUrls", img.url);
       });
 
       // Append removed image IDs
       removedImageIds.forEach((id) => {
-        console.log("RemovedImageIds:", id);
         fd.append("RemovedImageIds", String(id));
       });
 
       // Append amenity IDs
       selectedAmenityIds.forEach((id) => {
-        console.log("AmenityIds:", id);
         fd.append("AmenityIds", String(id));
       });
 
-      // Append new images
+      // Append new images (files)
       newImages.forEach((file) => {
-        console.log("NewImages:", file.name);
         fd.append("NewImages", file);
       });
 
-      // Final log before sending
-      console.log("Final FormData to send:");
+      // Optional: Debug logs (remove if you want)
       for (const [key, value] of fd.entries()) {
-        console.log(`${key}: ${value}`);
+        console.log(key, value);
       }
 
       const res = await fetch(
@@ -173,7 +174,6 @@ export default function UpdatePost() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => null);
-        console.log("🛑 Error response from server:", errData);
         if (errData?.errors) {
           const messages = Object.entries(errData.errors)
             .map(([key, val]) => `${key}: ${(val as string[]).join(", ")}`)
@@ -186,8 +186,8 @@ export default function UpdatePost() {
       setSuccess("Post updated successfully");
       setTimeout(() => navigate("/profile"), 1500);
     } catch (err: any) {
-      console.error("❌ Submission error:", err.message);
       setError(err.message);
+      console.error("Update failed:", err);
     }
   };
 
@@ -227,12 +227,14 @@ export default function UpdatePost() {
         value={formData.title || ""}
         onChange={handleChange}
         required
+        placeholder="Title"
       />
       <textarea
         name="description"
         value={formData.description || ""}
         onChange={handleChange}
         required
+        placeholder="Description"
       />
       <input
         name="rooms"
@@ -240,6 +242,8 @@ export default function UpdatePost() {
         value={formData.rooms ?? ""}
         onChange={handleChange}
         required
+        placeholder="Rooms"
+        min={0}
       />
       <input
         name="price"
@@ -247,6 +251,8 @@ export default function UpdatePost() {
         value={formData.price ?? ""}
         onChange={handleChange}
         required
+        placeholder="Price"
+        min={0}
       />
 
       <div className={styles.amenities}>
