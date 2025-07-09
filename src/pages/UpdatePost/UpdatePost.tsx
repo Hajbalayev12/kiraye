@@ -46,15 +46,37 @@ export default function UpdatePost() {
   useEffect(() => {
     async function fetchPost() {
       try {
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("Unauthorized");
+
         const res = await fetch(
-          `https://rashad2002-001-site1.ltempurl.com/api/House/Get/${id}`
+          `https://rashad2002-001-site1.ltempurl.com/api/House/GetByOwner/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
-        if (!res.ok) throw new Error("Failed to fetch post");
+
+        if (res.status === 401 || res.status === 403 || res.status === 404) {
+          throw new Error("You have no any access to this post");
+        }
+
+        if (!res.ok) {
+          let errMsg = "Failed to fetch post";
+          try {
+            const errData = await res.json();
+            if (errData?.message) errMsg = errData.message;
+          } catch {}
+          throw new Error(errMsg);
+        }
+
         const data: PostData = await res.json();
         setPost(data);
         setFormData(data);
       } catch (err: any) {
         setError(err.message || "Error fetching post");
+        setTimeout(() => navigate("/profile"), 3000);
       } finally {
         setLoading(false);
       }
@@ -75,9 +97,8 @@ export default function UpdatePost() {
 
     fetchPost();
     fetchAmenities();
-  }, [id]);
+  }, [id, navigate]);
 
-  // Set initial selected amenities from post data
   useEffect(() => {
     if (post && amenities.length && selectedAmenityIds.length === 0) {
       const matched = amenities
@@ -87,7 +108,6 @@ export default function UpdatePost() {
     }
   }, [post, amenities, selectedAmenityIds.length]);
 
-  // Handle input and textarea changes
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -98,21 +118,19 @@ export default function UpdatePost() {
     }));
   };
 
-  // Handle amenity checkbox toggle
   const handleAmenityChange = (id: number, checked: boolean) => {
     setSelectedAmenityIds((prev) =>
       checked ? [...prev, id] : prev.filter((a) => a !== id)
     );
   };
 
-  // Handle new image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setNewImages((prev) => [...prev, ...Array.from(e.target.files)]);
+      const files = e.target.files;
+      setNewImages((prev) => [...prev, ...Array.from(files)]);
     }
   };
 
-  // Handle removing existing image (mark for deletion)
   const handleDeleteImage = (index: number) => {
     const updatedImages = [...(formData.images || [])];
     const [removed] = updatedImages.splice(index, 1);
@@ -138,30 +156,21 @@ export default function UpdatePost() {
       fd.append("Rooms", String(formData.rooms));
       fd.append("Price", String(formData.price));
 
-      // Append existing image URLs
       (formData.images || []).forEach((img) => {
         fd.append("ImageUrls", img.url);
       });
 
-      // Append removed image IDs
       removedImageIds.forEach((id) => {
         fd.append("DeletedImageIds", String(id));
       });
 
-      // Append amenity IDs
       selectedAmenityIds.forEach((id) => {
         fd.append("AmenityIds", String(id));
       });
 
-      // Append new images (files)
       newImages.forEach((file) => {
         fd.append("NewImages", file);
       });
-
-      // Optional: Debug logs (remove if you want)
-      for (const [key, value] of fd.entries()) {
-        console.log(key, value);
-      }
 
       const res = await fetch(
         "https://rashad2002-001-site1.ltempurl.com/api/House/Update",
@@ -192,6 +201,10 @@ export default function UpdatePost() {
   };
 
   if (loading) return <div>Loading...</div>;
+
+  if (error) {
+    return <div className={styles.error}>{error}</div>;
+  }
 
   return (
     <form className={styles.mainContent} onSubmit={handleSubmit}>
@@ -268,7 +281,6 @@ export default function UpdatePost() {
         ))}
       </div>
 
-      {error && <div className={styles.error}>{error}</div>}
       {success && <div className={styles.success}>{success}</div>}
 
       <button type="submit" className={styles.updateBtn}>

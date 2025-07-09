@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Navbar.module.scss";
 import { FaSearch } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { jwtDecode } from "jwt-decode"; // ✅ Correct
+import { jwtDecode } from "jwt-decode";
 
 interface City {
   id: number;
@@ -24,6 +24,8 @@ const Navbar = () => {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [rooms, setRooms] = useState("");
+  const [sortByPrice, setSortByPrice] = useState("0"); // 🔹 NEW
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -34,9 +36,8 @@ const Navbar = () => {
   const [errorCities, setErrorCities] = useState("");
   const [errorRegions, setErrorRegions] = useState("");
 
-  useEffect(() => {
+  const syncAuthState = () => {
     const token = localStorage.getItem("token");
-
     if (token) {
       try {
         const decoded: any = jwtDecode(token);
@@ -47,15 +48,22 @@ const Navbar = () => {
           ];
         setUserRole(role);
         setIsLoggedIn(true);
-      } catch (err) {
-        console.error("Invalid token", err);
-        setIsLoggedIn(false);
+      } catch {
         setUserRole(null);
+        setIsLoggedIn(false);
       }
     } else {
-      setIsLoggedIn(false);
       setUserRole(null);
+      setIsLoggedIn(false);
     }
+  };
+
+  useEffect(() => {
+    syncAuthState();
+    window.addEventListener("storage", syncAuthState);
+    return () => {
+      window.removeEventListener("storage", syncAuthState);
+    };
   }, []);
 
   useEffect(() => {
@@ -115,6 +123,9 @@ const Navbar = () => {
     if (minPrice) params.set("MinPrice", minPrice);
     if (maxPrice) params.set("MaxPrice", maxPrice);
     if (rooms) params.set("Rooms", rooms);
+    if (sortByPrice && sortByPrice !== "0") {
+      params.set("SortByPrice", sortByPrice);
+    }
 
     navigate({
       pathname: "/",
@@ -125,10 +136,11 @@ const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("userName");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userPhone");
+    localStorage.removeItem("email");
+    localStorage.removeItem("contactPhone");
     setIsLoggedIn(false);
     setUserRole(null);
+    window.dispatchEvent(new Event("storage"));
     navigate("/signin");
   };
 
@@ -136,7 +148,7 @@ const Navbar = () => {
     <nav className={styles.navbar}>
       <div className={styles.left}>
         <Link to="/" className={styles.Logo}>
-          kiraye.az
+          RentAHouse.az
         </Link>
 
         <div className={styles.searchContainer}>
@@ -198,6 +210,16 @@ const Navbar = () => {
             <option value="2">2 otaq</option>
             <option value="3">3 otaq</option>
             <option value="4">4+ otaq</option>
+          </select>
+
+          {/* 🔽 New SortByPrice Dropdown */}
+          <select
+            value={sortByPrice}
+            onChange={(e) => setSortByPrice(e.target.value)}
+          >
+            <option value="0">Qiymətə görə sıralama</option>
+            <option value="1">Artan</option>
+            <option value="2">Azalan</option>
           </select>
 
           <button className={styles.searchBtn} onClick={handleSearch}>
