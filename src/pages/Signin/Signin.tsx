@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ import for redirect
-import styles from "./SignIn.module.scss";
+import styles from "./Signin.module.scss";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 // import * as jwt_decode from "jwt-decode";
 
