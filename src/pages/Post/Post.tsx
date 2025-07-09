@@ -5,6 +5,11 @@ import { FaMapMarkerAlt, FaPhoneAlt } from "react-icons/fa";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import { Carousel } from "react-responsive-carousel";
 
+interface Image {
+  id: number;
+  url: string;
+}
+
 interface PostData {
   id: number;
   title: string;
@@ -17,7 +22,7 @@ interface PostData {
   contactPhone: string;
   email: string;
   description: string;
-  imgUrls: string[];
+  images: Image[]; // updated
   price: number;
   amenityNames: string[];
 }
@@ -59,13 +64,17 @@ export default function Post() {
     <div className={styles.postPage}>
       <div className={styles.mainContent}>
         <div className={styles.imageSection}>
-          <Carousel showThumbs infiniteLoop>
-            {post.imgUrls.map((src, index) => (
-              <div key={index} className={styles.images}>
-                <img src={src} alt={`Image ${index + 1}`} />
-              </div>
-            ))}
-          </Carousel>
+          {post.images && post.images.length > 0 ? (
+            <Carousel showThumbs infiniteLoop>
+              {post.images.map((img) => (
+                <div key={img.id} className={styles.images}>
+                  <img src={img.url} alt={`Image ${img.id}`} />
+                </div>
+              ))}
+            </Carousel>
+          ) : (
+            <p>No images available.</p>
+          )}
         </div>
 
         <div className={styles.infoSection}>

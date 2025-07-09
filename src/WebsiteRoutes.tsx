@@ -8,6 +8,8 @@ import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import AddPost from "./pages/Addpost/Addpost";
 import Profile from "./pages/Profile/Profile";
 import UpdatePost from "./pages/UpdatePost/UpdatePost";
+import ResetPassword from "./pages/ResetPassword/ResetPassword";
+import ConfirmMakler from "./pages/ConfirmMakler/ConfirmMakler";
 
 const WebsiteRoutes = () => {
   return (
@@ -15,7 +17,6 @@ const WebsiteRoutes = () => {
       <Route path="/" element={<WebsiteLayout />}>
         <Route index element={<Home />} />
         <Route path="post/:id" element={<Post />} />
-        <Route path="post" element={<Post />} />
         <Route path="profile" element={<Profile />} />
         <Route path="addpost" element={<AddPost />} />
         <Route path="updatepost/:id" element={<UpdatePost />} />
@@ -24,6 +25,8 @@ const WebsiteRoutes = () => {
       <Route path="signin" element={<Signin />} />
       <Route path="signup" element={<Signup />} />
       <Route path="forgotpassword" element={<ForgotPassword />} />
+      <Route path="resetpassword" element={<ResetPassword />} />
+      <Route path="confirmmakler" element={<ConfirmMakler />} />
     </Routes>
   );
 };

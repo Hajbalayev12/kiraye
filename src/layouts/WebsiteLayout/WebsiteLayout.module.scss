@@ -1,11 +1,13 @@
-*{
-    margin: 0;
-    padding: 0;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* Add this to avoid box sizing issues */
 }
+
 .WebsiteLayout {
-  width: 100%;
   display: flex;
   flex-direction: column;
+  min-height: 100vh; /* full viewport height */
   background-color: #f9f9f9;
   overflow: hidden;
 
@@ -18,5 +20,7 @@
 }
 
 .MainContent {
-  flex: 1;
+  flex: 1 0 auto; /* grow to fill space */
+  overflow-y: auto; /* scroll only main content if needed */
+  padding: 20px; /* optional padding */
 }

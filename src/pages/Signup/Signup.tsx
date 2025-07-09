@@ -71,37 +71,17 @@ const SignUp = () => {
       );
 
       const contentType = response.headers.get("content-type");
-
       let data: any;
       if (contentType && contentType.includes("application/json")) {
         data = await response.json();
       } else {
-        // If response is plain text (not JSON), read as text
         const text = await response.text();
         if (!response.ok) {
           throw new Error(text || "Registration failed with unknown error");
-        } else {
-          // Success with text response
-          setSuccessMsg(text);
-          // Redirect to signin page after 1.5s delay
-          setTimeout(() => {
-            navigate("/signin");
-          }, 1500);
-          // Clear form
-          setFormData({
-            name: "",
-            surname: "",
-            userName: "",
-            email: "",
-            password: "",
-            confirmPassword: "",
-            phonePrefix: "50",
-            phoneNumber: "",
-            role: "0",
-          });
-          setLoading(false);
-          return;
         }
+        setSuccessMsg(text);
+        setLoading(false);
+        return;
       }
 
       if (!response.ok) {
@@ -110,11 +90,28 @@ const SignUp = () => {
         );
       }
 
-      // JSON success response
+      // Makler payment flow
+      if (Number(formData.role) === 1 && data?.url) {
+        // Save form data in localStorage for confirmation after payment
+        localStorage.setItem("name", formData.name.trim());
+        localStorage.setItem("surname", formData.surname.trim());
+        localStorage.setItem("email", formData.email.trim());
+        localStorage.setItem("phoneNumber", fullPhone);
+        localStorage.setItem("userName", formData.userName.trim());
+        localStorage.setItem("password", formData.password);
+        localStorage.setItem("confirmPassword", formData.confirmPassword);
+        localStorage.setItem("role", formData.role);
+
+        // Redirect to payment URL
+        window.location.href = data.url;
+        return;
+      }
+
+      // Normal user success flow
       setSuccessMsg("Registration successful! Redirecting to Sign In...");
       setTimeout(() => {
         navigate("/signin");
-      }, 500);
+      }, 1500);
 
       setFormData({
         name: "",

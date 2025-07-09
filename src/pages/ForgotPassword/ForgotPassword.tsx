@@ -15,7 +15,7 @@ const ForgotPassword = () => {
 
     try {
       const response = await fetch(
-        "https://your-backend.com/api/forgot-password",
+        "https://rashad2002-001-site1.ltempurl.com/api/Auth/ForgotPassword",
         {
           method: "POST",
           headers: {
@@ -25,15 +25,25 @@ const ForgotPassword = () => {
         }
       );
 
-      const data = await response.json();
+      const text = await response.text();
 
       if (!response.ok) {
-        throw new Error(data.message || "Request failed");
+        let errorMsg = text;
+        try {
+          const data = JSON.parse(text);
+          errorMsg = data.message || text;
+        } catch {
+          // If not JSON, keep original text
+        }
+        throw new Error(errorMsg);
       }
 
-      setMessage("If this email is registered, a reset link has been sent.");
+      setMessage(
+        text ||
+          "If this email is registered, a reset link has been sent to your email."
+      );
     } catch (err: any) {
-      setErrorMsg(err.message);
+      setErrorMsg(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
