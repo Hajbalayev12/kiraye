@@ -148,7 +148,7 @@ const Navbar = () => {
     <nav className={styles.navbar}>
       <div className={styles.left}>
         <Link to="/" className={styles.Logo}>
-          RentAHouse.az
+          RentHouse.az
         </Link>
 
         <div className={styles.searchContainer}>
