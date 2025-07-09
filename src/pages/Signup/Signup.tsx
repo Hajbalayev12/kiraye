@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import styles from "./SignUp.module.scss";
+import styles from "./Signup.module.scss";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const SignUp = () => {

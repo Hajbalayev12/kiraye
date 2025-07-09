@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import styles from "./AddPost.module.scss";
+import styles from "./Addpost.module.scss";
 
 interface City {
   id: number;
