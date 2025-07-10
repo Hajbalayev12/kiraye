@@ -119,9 +119,6 @@ export default function Post() {
             {post.owner.ownerName} {post.owner.ownerSurname}
           </h4>
           <p>Əmlakçı</p>
-          <button className={styles.showNumber}>
-            <FaPhoneAlt /> Nömrəni göstər
-          </button>
           <div className={styles.phone}>
             <strong>Phone:</strong> {post.owner.contactPhone || "N/A"}
           </div>
@@ -131,7 +128,6 @@ export default function Post() {
           <div className={styles.warning}>
             <strong>Diqqət:</strong> Evə baxmadan əvvəl öncədən ödəniş etməyin.
           </div>
-          <button className={styles.rentButton}>Tez kirayələ</button>
         </div>
       </div>
     </div>
