@@ -132,7 +132,7 @@ const SignIn = () => {
         </button>
 
         <p className={styles.bottomText}>
-          Don’t have an account? <Link href="/signup">Sign up</Link>
+          Don’t have an account? <Link to="/signup">Sign up</Link>
         </p>
       </form>
     </div>
