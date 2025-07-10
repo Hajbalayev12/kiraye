@@ -17,12 +17,15 @@ interface PostData {
   regionName: string;
   cityName: string;
   rooms: number;
-  ownerName: string;
-  ownerSurname: string;
-  contactPhone: string;
-  email: string;
+  owner: {
+    id: string;
+    ownerName: string;
+    ownerSurname: string;
+    contactPhone: string;
+    email: string;
+  };
   description: string;
-  images: Image[]; // updated
+  images: Image[];
   price: number;
   amenityNames: string[];
 }
@@ -113,17 +116,17 @@ export default function Post() {
 
         <div className={styles.realtorBox}>
           <h4>
-            {post.ownerName} {post.ownerSurname}
+            {post.owner.ownerName} {post.owner.ownerSurname}
           </h4>
           <p>Əmlakçı</p>
           <button className={styles.showNumber}>
             <FaPhoneAlt /> Nömrəni göstər
           </button>
           <div className={styles.phone}>
-            <strong>Phone:</strong> {post.contactPhone || "N/A"}
+            <strong>Phone:</strong> {post.owner.contactPhone || "N/A"}
           </div>
           <div className={styles.mail}>
-            <strong>Email:</strong> {post.email || "N/A"}
+            <strong>Email:</strong> {post.owner.email || "N/A"}
           </div>
           <div className={styles.warning}>
             <strong>Diqqət:</strong> Evə baxmadan əvvəl öncədən ödəniş etməyin.
