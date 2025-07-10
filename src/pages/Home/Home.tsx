@@ -114,7 +114,7 @@ const Home: React.FC = () => {
 
             <div className={styles.info}>
               <div className={styles.priceRow}>
-                <span>{post.price} AZN</span>
+                <span>{post.price} AZN/Gün</span>
               </div>
 
               <div className={styles.location}>
