@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ import for redirect
 import styles from "./Signin.module.scss";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-// import * as jwt_decode from "jwt-decode";
+import { Link } from "react-router-dom";
 
 const SignIn = () => {
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
@@ -132,7 +132,7 @@ const SignIn = () => {
         </button>
 
         <p className={styles.bottomText}>
-          Don’t have an account? <a href="/signup">Sign up</a>
+          Don’t have an account? <Link href="/signup">Sign up</Link>
         </p>
       </form>
     </div>
